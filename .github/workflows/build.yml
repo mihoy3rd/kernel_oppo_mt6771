@@ -1,0 +1,78 @@
+name: Only Build  Kernel and AnyKernel3
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Only Build  Kernel by ${{ github.actor }}
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Get branch names.
+        id: branch-names
+        uses: tj-actions/branch-names@v8
+
+      - name: Set SWAP to 5GiB
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 5
+
+      - name: Initialize compilation environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget git automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+          mkdir -p $GITHUB_WORKSPACE/workdir
+          cd $GITHUB_WORKSPACE/workdir
+          echo "BUILD_TIME=$(TZ=Asia/Shanghai date "+%Y%m%d%H%M")" >> $GITHUB_ENV
+      
+      - name: python2.7
+        run: |
+          sudo rm /bin/python
+          sudo ln -s /bin/python2.7 /bin/python
+      - name: Get Clang toolchain
+        run: |
+          git clone --depth=1 https://github.com/kardebayan/android_prebuilts_clang_host_linux-x86_clang-5696680 $GITHUB_WORKSPACE/workdir/clang
+      - name: Get gcc32 toolchain
+        run: |
+          git clone --depth=1 https://github.com/KudProject/arm-linux-androideabi-4.9 $GITHUB_WORKSPACE/workdir/gcc32
+      - name: Get gcc toolchain
+        run: |
+          git clone --depth=1 https://github.com/KudProject/aarch64-linux-android-4.9 $GITHUB_WORKSPACE/workdir/gcc
+
+      - name: Get Kernel souce
+        run: |
+          git clone --recursive https://github.com/$GITHUB_REPOSITORY/ -b ${{ steps.branch-names.outputs.current_branch }} --depth 1 $GITHUB_WORKSPACE/workdir/source
+
+      - name: Build  Kernel
+        run: |
+          export KBUILD_BUILD_HOST=Github-Action
+          export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
+          export ARCH="arm64"
+          PATH="$GITHUB_WORKSPACE/workdir//clang/bin:$GITHUB_WORKSPACE/workdir//gcc/bin:$GITHUB_WORKSPACE/workdir//gcc32/bin:${PATH}"
+          export KBUILD_COMPILER_STRING="$($GITHUB_WORKSPACE/workdir//clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
+          cd $GITHUB_WORKSPACE/workdir/source
+          make -j$(nproc) O=out ARCH=arm64 oppo6771_17065_defconfig
+          make -j$(nproc) O=out \
+                          ARCH=arm64 \
+                          CC=clang \
+                          CLANG_TRIPLE=aarch64-linux-gnu- \
+                          CROSS_COMPILE=aarch64-linux-android- \
+                          CROSS_COMPILE_ARM32=arm-linux-androideabi-
+
+      - name: Check a kernel output files
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/source
+          if [ -f out/arch/arm64/boot/Image.gz-dtb ]; then
+              echo "CHECK_FILE_IS_OK=true" >> $GITHUB_ENV
+          else
+              echo "Kernel output file is empty"
+              exit 1
+          fi
+
+      - name: Upload  Kernel
+        if: env.CHECK_FILE_IS_OK == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android_kernel_oppo_mt6771_19350_${{ env.BUILD_TIME }}_Image.gz-dtb
+          path: workdir/source/out/arch/arm64/boot/Image.gz-dtb
