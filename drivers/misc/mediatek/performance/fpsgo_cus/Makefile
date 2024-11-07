@@ -45,7 +45,7 @@ obj-m += fpsgo.o
 fpsgo-y += src/fpsgo_main.o
 
 ifeq (y,$(CONFIG_MTK_FPSGO_FBT_GAME))
-fpsgo-$(CONFIG_ARM) += src/xgf_ko_arm32.o
-fpsgo-$(CONFIG_ARM64) += src/xgf_ko_arm64.o
+fpsgo-$(CONFIG_ARM) += src/xgf_ko_arm32.o_shipped
+fpsgo-$(CONFIG_ARM64) += src/xgf_ko_arm64.o_shipped
 endif
 
