@@ -48,7 +48,7 @@ jobs:
           PATH="$GITHUB_WORKSPACE/workdir//clang/bin:$GITHUB_WORKSPACE/workdir//gcc/bin:$GITHUB_WORKSPACE/workdir//gcc32/bin:${PATH}"
           export KBUILD_COMPILER_STRING="$($GITHUB_WORKSPACE/workdir//clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
           cd $GITHUB_WORKSPACE/workdir/source
-          make -j$(nproc) O=out ARCH=arm64 oppo6771_17065_defconfig
+          make -j$(nproc) O=out ARCH=arm64 oppo6771_18611_defconfig
           make -j$(nproc) O=out \
                           ARCH=arm64 \
                           CC=clang \
