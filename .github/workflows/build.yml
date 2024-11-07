@@ -1,4 +1,4 @@
-name: Only Build  Kernel and AnyKernel3
+name: Only Build Kernel 和 AnyKernel3
 on:
   workflow_call:
   workflow_dispatch:
@@ -26,10 +26,6 @@ jobs:
           cd $GITHUB_WORKSPACE/workdir
           echo "BUILD_TIME=$(TZ=Asia/Shanghai date "+%Y%m%d%H%M")" >> $GITHUB_ENV
       
-      - name: python2.7
-        run: |
-          sudo rm /bin/python
-          sudo ln -s /bin/python2.7 /bin/python
       - name: Get Clang toolchain
         run: |
           git clone --depth=1 https://github.com/kardebayan/android_prebuilts_clang_host_linux-x86_clang-5696680 $GITHUB_WORKSPACE/workdir/clang
