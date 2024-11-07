@@ -49,7 +49,6 @@ jobs:
           export KBUILD_COMPILER_STRING="$($GITHUB_WORKSPACE/workdir//clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g')"
           cd $GITHUB_WORKSPACE/workdir/source
           make -j$(nproc) O=out ARCH=arm64 oppo6771_17065_defconfig
-          make CONFIG_DEBUG_SECTION_MISMATCH=y
           make -j$(nproc) O=out \
                           ARCH=arm64 \
                           CC=clang \
